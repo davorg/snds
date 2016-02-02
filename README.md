@@ -8,4 +8,4 @@ See https://postmaster.live.com/snds/ for details.
 Utilities
 ---------
 
-get_ms_data - Gets the two current data files for your SNDS account.
+get_snds_data - Gets the two current data files for your SNDS account.
