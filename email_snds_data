@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use LWP::UserAgent;
+use Email::Stuffer;
+
+my $to = shift || die "No email address given\n";
+
+my @urls = qw[
+  https://postmaster.live.com/snds/data.aspx
+  https://postmaster.live.com/snds/ipStatus.aspx
+];
+my $key = shift || $ENV{SNDS_KEY};
+
+die "No SNDS key given\n" unless defined $key;
+
+my $ua = LWP::UserAgent->new;
+
+my $email = Email::Stuffer->new
+  ->to($to)
+  ->subject('SDNS Data')
+  ->from('postmaster@mag-sol.com')
+  ->text_body('Here is your SNDS data');
+
+foreach (@urls) {
+  if (my $file = get_url($ua, $_, $key)) {
+    $email->attach_file($file);
+  }
+}
+
+$email->send_or_die;
+
+sub get_url {
+  my ($ua, $url, $key) = @_;
+
+  my $resp = $ua->get("$url?key=$key");
+  my $data = $resp->content;
+  unless (length $data) {
+    warn "No data for $url\n";
+    return;
+  }
+
+  my $file = $resp->filename;
+  open my $out_fh, '>', $file or die "$file: $!";
+  print $out_fh $data;
+
+  return $file;
+}
