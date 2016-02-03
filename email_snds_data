@@ -22,15 +22,19 @@ my $ua = LWP::UserAgent->new;
 my $email = Email::Stuffer->new
   ->to($to)
   ->subject('SDNS Data')
-  ->from('postmaster@mag-sol.com')
-  ->text_body('Here is your SNDS data');
+  ->from('postmaster@mag-sol.com');
+
+my $body = 'Here is your SNDS data';
 
 foreach (@urls) {
   if (my $file = get_url($ua, $_, $key)) {
     $email->attach_file($file);
+  } else {
+    $body .= "\n\nNo data from $_.";
   }
 }
 
+$email->text_body($body);
 $email->send_or_die;
 
 sub get_url {
@@ -39,7 +43,7 @@ sub get_url {
   my $resp = $ua->get("$url?key=$key");
   my $data = $resp->content;
   unless (length $data) {
-    warn "No data for $url\n";
+    warn "No data from $url\n";
     return;
   }
 
